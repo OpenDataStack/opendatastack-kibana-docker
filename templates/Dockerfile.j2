@@ -1,26 +1,18 @@
 # This Dockerfile was generated from the template at templates/Dockerfile.j2
-{% if artifacts_dir -%}
-{%   set url_root = 'http://localhost:8000/kibana/target' -%}
-{%   set x_pack = 'http://localhost:8000/x-pack-kibana/build/distributions/x-pack-%s.zip' % elastic_version -%}
-{% elif staging_build_num -%}
-{%   set version_tag = elastic_version + '-' + staging_build_num -%}
-{%   set url_root = 'https://staging.elastic.co/%s/downloads/kibana' % version_tag -%}
-{%   set x_pack = 'https://staging.elastic.co/%s/downloads/kibana-plugins/x-pack/x-pack-%s.zip' % (version_tag, elastic_version) -%}
-{% else -%}
-{%   set version_tag = elastic_version -%}
-{%   set url_root = 'https://artifacts.elastic.co/downloads/kibana' -%}
-{%   set x_pack = 'x-pack' -%}
-{% endif -%}
 
+# https://github.com/OpenDataStack/kibana/releases/download/v6.0.0%2Bopendatastack/kibana-6.0.0-opendatastack-linux-x86_64.tar.gz
+
+{%   set version_tag = elastic_version -%}
+{%   set url_root = 'https://github.com/OpenDataStack/kibana/releases/download' -%}
 FROM centos:7
-LABEL maintainer "Elastic Docker Team <docker@elastic.co>"
+LABEL maintainer "OpenDataStack Team <devops@angrycactus.io>"
 EXPOSE 5601
 
 # Add Reporting dependencies.
 RUN yum update -y && yum install -y fontconfig freetype && yum clean all
 
 WORKDIR /usr/share/kibana
-RUN curl -Ls {{ url_root }}/kibana-{{ elastic_version }}-linux-x86_64.tar.gz | tar --strip-components=1 -zxf - && \
+RUN curl -Ls {{ url_root }}/v{{ elastic_version }}+{{ image_flavor }}/kibana-{{ elastic_version }}-{{ image_flavor }}-linux-x86_64.tar.gz | tar --strip-components=1 -zxf - && \
     ln -s /usr/share/kibana /opt/kibana
 
 ENV ELASTIC_CONTAINER true
@@ -42,7 +34,9 @@ RUN groupadd --gid 1000 kibana && \
       --home-dir /usr/share/kibana --no-create-home \
       kibana
 USER kibana
-{% if image_flavor != 'oss' %}
-RUN kibana-plugin install {{ x_pack }}
+
+{% if image_flavor == 'opendatastack' %}
+RUN kibana-plugin install https://github.com/wtakase/kibana-own-home/releases/download/v{{ elastic_version }}/own_home-{{ elastic_version }}.zip
 {% endif %}
+
 CMD ["/bin/bash", "/usr/local/bin/kibana-docker"]

@@ -1,5 +1,5 @@
 SHELL=/bin/bash
-ELASTIC_REGISTRY ?= docker.elastic.co
+ELASTIC_REGISTRY ?= ''
 
 export PATH := ./bin:./venv/bin:$(PATH)
 
@@ -15,13 +15,12 @@ endif
 PYTHON ?= $(shell command -v python3.5 || command -v python3.6)
 
 # Build different images tagged as :version-<flavor>
-IMAGE_FLAVORS ?= oss x-pack
+IMAGE_FLAVORS ?= opendatastack
 
 # Which image flavor will additionally receive the plain `:version` tag
-DEFAULT_IMAGE_FLAVOR ?= x-pack
+DEFAULT_IMAGE_FLAVOR ?= opendatastack
 
-IMAGE_TAG ?= $(ELASTIC_REGISTRY)/kibana/kibana
-HTTPD ?= kibana-docker-artifact-server
+IMAGE_TAG ?= $(ELASTIC_REGISTRY)opendatastack/kibana
 
 FIGLET := pyfiglet -w 160 -f puffy
 
@@ -40,47 +39,22 @@ build: dockerfile
 	docker pull centos:7
 	$(foreach FLAVOR, $(IMAGE_FLAVORS), \
 	  $(FIGLET) "build: $(FLAVOR)"; \
-	  docker build -t $(IMAGE_TAG)-$(FLAVOR):$(VERSION_TAG) \
+	  docker build --no-cache -t $(IMAGE_TAG)-$(FLAVOR):$(VERSION_TAG) \
 	    -f build/kibana/Dockerfile-$(FLAVOR) build/kibana; \
 	  if [[ $(FLAVOR) == $(DEFAULT_IMAGE_FLAVOR) ]]; then \
 	    docker tag $(IMAGE_TAG)-$(FLAVOR):$(VERSION_TAG) $(IMAGE_TAG):$(VERSION_TAG); \
 	  fi; \
 	)
 
-release-manager-snapshot: clean
-	ARTIFACTS_DIR=$(ARTIFACTS_DIR) ELASTIC_VERSION=$(ELASTIC_VERSION)-SNAPSHOT make build-from-local-artifacts
-
-release-manager-release: clean
-	ARTIFACTS_DIR=$(ARTIFACTS_DIR) ELASTIC_VERSION=$(ELASTIC_VERSION) make build-from-local-artifacts
-
-# Build from artifacts on the local filesystem, using an http server (running
-# in a container) to provide the artifacts to the Dockerfile.
-build-from-local-artifacts: venv dockerfile docker-compose
-	docker run --rm -d --name=$(HTTPD) \
-	           --network=host -v $(ARTIFACTS_DIR):/mnt \
-	           python:3 bash -c 'cd /mnt && python3 -m http.server'
-	timeout 120 bash -c 'until curl -s localhost:8000 > /dev/null; do sleep 1; done'
-	-$(foreach FLAVOR, $(IMAGE_FLAVORS), \
-	  pyfiglet -f puffy -w 160 "Building: $(FLAVOR)"; \
-	  docker build --network=host -t $(IMAGE_TAG)-$(FLAVOR):$(VERSION_TAG) -f build/kibana/Dockerfile-$(FLAVOR) build/kibana || \
-	    (docker kill $(HTTPD); false); \
-	  if [[ $(FLAVOR) == $(DEFAULT_IMAGE_FLAVOR) ]]; then \
-	    docker tag $(IMAGE_TAG)-$(FLAVOR):$(VERSION_TAG) $(IMAGE_TAG):$(VERSION_TAG); \
-	  fi; \
-	)
-	-docker kill $(HTTPD)
-
 # Push the image to the dedicated push endpoint at "push.docker.elastic.co"
 push: test
 	$(foreach FLAVOR, $(IMAGE_FLAVORS), \
-	  docker tag $(IMAGE_TAG)-$(FLAVOR):$(VERSION_TAG) push.$(IMAGE_TAG)-$(FLAVOR):$(VERSION_TAG); \
-	  docker push push.$(IMAGE_TAG)-$(FLAVOR):$(VERSION_TAG); \
-	  docker rmi push.$(IMAGE_TAG)-$(FLAVOR):$(VERSION_TAG); \
+	  docker push $(IMAGE_TAG)-$(FLAVOR):$(VERSION_TAG); \
+	  docker rmi $(IMAGE_TAG)-$(FLAVOR):$(VERSION_TAG); \
 	)
 	# Also push the default version, with no suffix like '-oss' or '-x-pack'
-	docker tag $(IMAGE_TAG):$(VERSION_TAG) push.$(IMAGE_TAG):$(VERSION_TAG);
-	docker push push.$(IMAGE_TAG):$(VERSION_TAG);
-	docker rmi push.$(IMAGE_TAG):$(VERSION_TAG);
+	docker push $(IMAGE_TAG):$(VERSION_TAG);
+	docker rmi $(IMAGE_TAG):$(VERSION_TAG);
 
 clean-test:
 	$(TEST_COMPOSE) down
@@ -97,8 +71,6 @@ dockerfile: venv templates/Dockerfile.j2
 	  jinja2 \
 	    -D image_flavor='$(FLAVOR)' \
 	    -D elastic_version='$(ELASTIC_VERSION)' \
-	    -D staging_build_num='$(STAGING_BUILD_NUM)' \
-	    -D artifacts_dir='$(ARTIFACTS_DIR)' \
 	    templates/Dockerfile.j2 > build/kibana/Dockerfile-$(FLAVOR); \
 	)
 

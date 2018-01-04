@@ -17,7 +17,7 @@ def test_all_files_in_optimize_directory_are_owned_by_kibana(kibana):
 
 def test_x_pack_installation(kibana):
     installed = ('x-pack') in kibana.stdout_of('/usr/share/kibana/bin/kibana-plugin list')
-    if kibana.image_flavor == 'oss':
+    if kibana.image_flavor in ['oss', 'opendatastack']:
         assert not installed
     else:
         assert installed

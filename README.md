@@ -1,7 +1,28 @@
 ## Description
 
-This is the official Kibana image created by Elastic Inc.
+This is the OpenDataStack Kibana image.
 
-Documentation can be found on the [Elastic website](https://www.elastic.co/guide/en/kibana/current/docker.html).
+* Install required python virtualenv dependencies
 
-Kibana is built with [X-Pack](https://www.elastic.co/guide/en/x-pack/current/index.html).
+```sh
+$ make venv
+```
+
+* Make the kibana-opendatastack image locally.
+
+```sh
+$ make build
+```
+
+* Run the automated tests.
+
+```sh
+$ make test
+```
+
+* Get the sample docker-compose.yml file built.
+
+```sh
+$ make docker-compose
+$ docker-compose up
+```

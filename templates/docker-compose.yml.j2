@@ -2,7 +2,15 @@
 version: '3'
 services:
   kibana:
-    image: docker.elastic.co/kibana/kibana-{{ image_flavor }}:{{ version_tag }}
+    image: opendatastack/kibana-{{ image_flavor }}:{{ version_tag }}
+    environment:
+      ELASTICSEARCH_URL: 'http://localhost:19200'
+      ELASTICSEARCH_REQUESTHEADERSWHITELIST: '["x-proxy-user","cookie"]'
+      OWN_HOME_ELASTICSEARCH_URL: 'http://elasticsearch:9200'
+      OWN_HOME_SESSION_SECRETKEY: 'the-password-must-be-at-least-32-characters-long'
+      OWN_HOME_SESSION_ISSECURE: 'false'
+      OWN_HOME_LOCAL_ENABLED: 'true'
+      OWN_HOME_LOCAL_GROUPS: '["public"]'
     ports:
       - 5601:5601
     networks: [elastic]
@@ -27,5 +35,18 @@ services:
       {% if image_flavor == 'x-pack' -%}
       - ELASTIC_PASSWORD=changeme
       {% endif %}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -I -s -L http://127.0.0.1:9200 || exit 1"]
+      interval: 5s
+      retries: 10
+
+  demo:
+    image: opendatastack/elasticsearch-demo:{{ version_tag }}
+    entrypoint: sh -c "sleep 20s && /load.sh"
+    container_name: demo
+    networks: [elastic]
+    depends_on:
+      - elasticsearch
+
 networks:
   elastic:
