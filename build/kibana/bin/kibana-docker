@@ -121,6 +121,39 @@ kibana_vars=(
     xpack.security.encryptionKey
     xpack.security.secureCookies
     xpack.security.sessionTimeout
+    # Own Home plugin settings.
+    own_home.proxy_user_header
+    own_home.get_username_from_session.enabled
+    own_home.get_username_from_session.key
+    own_home.default_kibana_index_suffix
+    own_home.ssl.certificate
+    own_home.ssl.key
+    own_home.elasticsearch.url
+    own_home.elasticsearch.ssl.certificateAuthorities
+    own_home.session.secretkey
+    own_home.session.isSecure
+    own_home.session.timeout
+    own_home.local.enabled
+    own_home.local.groups
+    own_home.ldap.enabled
+    own_home.ldap.url
+    own_home.ldap.userbase
+    own_home.ldap.rolebase
+    own_home.ldap.search_filter
+    own_home.ldap.username_attribute
+    own_home.ldap.rolename_attribute
+    own_home.ldap.adfs
+    own_home.ldap.member_attribute
+    own_home.ldap.get_dn_dynamically
+    own_home.ldap.bind.dn
+    own_home.ldap.bind.password
+    own_home.explicit_kibana_index_url.enabled
+    own_home.explicit_kibana_index_url.proxy.url
+    own_home.explicit_kibana_index_url.proxy.ssl.certificate
+    own_home.explicit_kibana_index_url.proxy.ssl.key
+    own_home.explicit_kibana_index_url.kibana.ssl.verificationMode
+    own_home.explicit_kibana_index_url.kibana.ssl.certificateAuthorities
+    own_home.force_to_access_by_es_user
 )
 
 longopts=''
