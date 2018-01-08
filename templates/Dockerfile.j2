@@ -36,7 +36,7 @@ RUN groupadd --gid 1000 kibana && \
 USER kibana
 
 {% if image_flavor == 'opendatastack' %}
-RUN kibana-plugin install https://github.com/wtakase/kibana-own-home/releases/download/v{{ elastic_version }}/own_home-{{ elastic_version }}.zip
+RUN kibana-plugin install https://github.com/opendatastack/kibana-own-home/releases/download/v{{ elastic_version }}-{{ image_flavor }}/own_home-{{ elastic_version }}.zip
 {% endif %}
 
 CMD ["/bin/bash", "/usr/local/bin/kibana-docker"]
